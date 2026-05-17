@@ -219,7 +219,12 @@ export const AdminAlbumsBulkPage = () => {
       toastError(e);
     }
   }, (errs) => {
-    toast.error(String(JSON.stringify(errs).slice(0, 200)));
+    const firstAlbum = Array.isArray(errs.items) ? errs.items.find(Boolean) : undefined;
+    const albumErr = firstAlbum?.album as Record<string, { message?: string }> | undefined;
+    const albumMsg = albumErr ? Object.values(albumErr)[0]?.message : undefined;
+    const songErrs = firstAlbum?.songs as Array<Record<string, { message?: string }>> | undefined;
+    const songMsg = songErrs?.find(Boolean) ? Object.values(songErrs.find(Boolean) as Record<string, { message?: string }>)[0]?.message : undefined;
+    toast.error(String(albumMsg ?? songMsg ?? 'Validation failed.'));
   });
 
   const totalSongs = form.watch('items').reduce((acc, it) => acc + (it.songs?.length ?? 0), 0);

@@ -56,18 +56,11 @@ export const AdminAlbumForm = ({ mode }: Props) => {
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      if (mode === 'create') {
-        const res = await albumsApi.create(values);
-        toast.success('Album created.');
-        mutate(['albums']);
-        navigate(`/albums/${res.data?.albumId}`);
-      } else {
-        await albumsApi.update(albumId as number, values);
-        toast.success('Album updated.');
-        mutate(['albums']);
-        mutate(['album', albumId]);
-        navigate(`/albums/${albumId}`);
-      }
+      await albumsApi.update(albumId as number, values);
+      toast.success('Album updated.');
+      mutate(['albums']);
+      mutate(['album', albumId]);
+      navigate(`/albums/${albumId}`);
     } catch (e) {
       toastError(e);
     }
@@ -102,5 +95,4 @@ export const AdminAlbumForm = ({ mode }: Props) => {
   );
 };
 
-export const AdminAlbumCreatePage = () => <AdminAlbumForm mode="create" />;
 export const AdminAlbumEditPage = () => <AdminAlbumForm mode="edit" />;

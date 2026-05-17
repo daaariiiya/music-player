@@ -5,4 +5,4 @@ dist/
 .claude/
 .idea/
 .vscode/
-tsbuildinfo*
+*.tsbuildinfo

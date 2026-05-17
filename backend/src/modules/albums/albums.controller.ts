@@ -2,7 +2,7 @@ import type { Context } from 'hono';
 import { success } from '../../utils/response.js';
 import { BadRequestError } from '../../utils/errors.js';
 import * as service from './albums.service.js';
-import type { BulkCreateAlbumInput, BulkCreateAlbumsInput, CreateAlbumInput, UpdateAlbumInput } from './albums.schema.js';
+import type { BulkCreateAlbumInput, BulkCreateAlbumsInput, UpdateAlbumInput } from './albums.schema.js';
 
 const parseId = (c: Context): number => {
   const n = Number(c.req.param('id'));
@@ -15,11 +15,6 @@ export const list = async (c: Context) =>
 
 export const getOne = async (c: Context) =>
   c.json(success('Album detail.', await service.getById(parseId(c))));
-
-export const create = async (c: Context) => {
-  const body = c.get('body') as CreateAlbumInput;
-  return c.json(success('Album created.', await service.create(body)), 201);
-};
 
 export const bulkCreate = async (c: Context) => {
   const body = c.get('body') as BulkCreateAlbumsInput;

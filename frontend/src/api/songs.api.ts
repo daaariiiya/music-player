@@ -27,9 +27,6 @@ export const songsApi = {
   getById: (id: number) =>
     apiClient.get<ApiResponse<SongDetail>>(`/songs/${id}`).then((r) => r.data),
 
-  create: (payload: CreateSongPayload) =>
-    apiClient.post<ApiResponse<{ songId: number }>>('/songs', payload).then((r) => r.data),
-
   update: (id: number, payload: UpdateSongPayload) =>
     apiClient.put<ApiResponse>(`/songs/${id}`, payload).then((r) => r.data),
 

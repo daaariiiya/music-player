@@ -74,18 +74,11 @@ export const AdminSongForm = ({ mode }: Props) => {
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
-      if (mode === 'create') {
-        const res = await songsApi.create(values);
-        toast.success('Song created.');
-        mutate(['songs']);
-        navigate(`/songs/${res.data?.songId}`);
-      } else {
-        await songsApi.update(songId as number, values);
-        toast.success('Song updated.');
-        mutate(['songs']);
-        mutate(['song', songId]);
-        navigate(`/songs/${songId}`);
-      }
+      await songsApi.update(songId as number, values);
+      toast.success('Song updated.');
+      mutate(['songs']);
+      mutate(['song', songId]);
+      navigate(`/songs/${songId}`);
     } catch (e) {
       toastError(e);
     }
@@ -127,5 +120,4 @@ export const AdminSongForm = ({ mode }: Props) => {
   );
 };
 
-export const AdminSongCreatePage = () => <AdminSongForm mode="create" />;
 export const AdminSongEditPage = () => <AdminSongForm mode="edit" />;

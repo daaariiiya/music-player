@@ -149,7 +149,7 @@ button:disabled {
 .layout {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .layout-row {
@@ -161,7 +161,7 @@ button:disabled {
 .layout-main {
   flex: 1;
   overflow: auto;
-  padding: 1.5rem 2rem;
+  padding: 1.5rem 2rem 3rem;
   max-width: 1400px;
   width: 100%;
   margin: 0 auto;
@@ -568,6 +568,52 @@ textarea:-webkit-autofill {
   flex-direction: column;
   gap: 0.6rem;
 }
+.detail-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.btn-edit {
+  display: inline-block;
+  padding: 0.4rem 0.85rem;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--accent-2);
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-edit:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+.detail-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.btn-delete {
+  padding: 0.4rem 0.85rem;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: transparent;
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-delete:hover:not(:disabled) {
+  background: var(--danger);
+  color: #fff;
+}
 .detail-info p {
   margin: 0;
   color: var(--text);
@@ -712,15 +758,23 @@ textarea:-webkit-autofill {
   padding: 0.15rem 0.4rem;
   border-radius: 4px;
 }
-.photo-uploader-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+.photo-uploader-reset {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  font-size: 10px;
+  padding: 0.25rem 0.5rem;
+  background: rgba(23, 23, 25, 0.85);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
-.photo-uploader-actions button {
+.photo-uploader-reset:hover {
+  background: var(--panel-2);
+  color: var(--accent-2);
+}
+.photo-uploader-hint {
   font-size: 11px;
-  padding: 0.3rem 0.6rem;
+  color: var(--muted);
 }
 
 /* === Bulk import pages === */

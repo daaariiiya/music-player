@@ -28,15 +28,12 @@ const PlaylistByIdPage = lazy(() => import('../pages/PlaylistByIdPage').then((m)
 
 const StatisticsPage = lazy(() => import('../pages/StatisticsPage').then((m) => ({ default: m.StatisticsPage })));
 
-const AdminPerformerCreatePage = lazy(() => import('../pages/admin/AdminPerformerForm').then((m) => ({ default: m.AdminPerformerCreatePage })));
 const AdminPerformerEditPage = lazy(() => import('../pages/admin/AdminPerformerForm').then((m) => ({ default: m.AdminPerformerEditPage })));
-const AdminAlbumCreatePage = lazy(() => import('../pages/admin/AdminAlbumForm').then((m) => ({ default: m.AdminAlbumCreatePage })));
 const AdminAlbumEditPage = lazy(() => import('../pages/admin/AdminAlbumForm').then((m) => ({ default: m.AdminAlbumEditPage })));
-const AdminSongCreatePage = lazy(() => import('../pages/admin/AdminSongForm').then((m) => ({ default: m.AdminSongCreatePage })));
 const AdminSongEditPage = lazy(() => import('../pages/admin/AdminSongForm').then((m) => ({ default: m.AdminSongEditPage })));
-const AdminPerformersBulkPage = lazy(() => import('../pages/admin/AdminPerformersBulkPage').then((m) => ({ default: m.AdminPerformersBulkPage })));
-const AdminAlbumsBulkPage = lazy(() => import('../pages/admin/AdminAlbumsBulkPage').then((m) => ({ default: m.AdminAlbumsBulkPage })));
-const AdminSongsBulkPage = lazy(() => import('../pages/admin/AdminSongsBulkPage').then((m) => ({ default: m.AdminSongsBulkPage })));
+const AdminPerformersNewPage = lazy(() => import('../pages/admin/AdminPerformersBulkPage').then((m) => ({ default: m.AdminPerformersBulkPage })));
+const AdminAlbumsNewPage = lazy(() => import('../pages/admin/AdminAlbumsBulkPage').then((m) => ({ default: m.AdminAlbumsBulkPage })));
+const AdminSongsNewPage = lazy(() => import('../pages/admin/AdminSongsBulkPage').then((m) => ({ default: m.AdminSongsBulkPage })));
 
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage })));
 
@@ -75,22 +72,19 @@ const router = createBrowserRouter([
               { path: '/profile', element: <ProfilePage /> },
               { path: '/playlists', element: <PlaylistsPage /> },
               { path: '/playlists/:id', element: <PlaylistByIdPage /> },
-              { path: '/statistics', element: <StatisticsPage /> },
             ],
           },
 
           {
             element: <AdminRoute />,
             children: [
-              { path: '/admin/performers/create', element: <AdminPerformerCreatePage /> },
+              { path: '/statistics', element: <StatisticsPage /> },
+              { path: '/admin/performers/new', element: <AdminPerformersNewPage /> },
               { path: '/admin/performers/:id/edit', element: <AdminPerformerEditPage /> },
-              { path: '/admin/albums/create', element: <AdminAlbumCreatePage /> },
+              { path: '/admin/albums/new', element: <AdminAlbumsNewPage /> },
               { path: '/admin/albums/:id/edit', element: <AdminAlbumEditPage /> },
-              { path: '/admin/songs/create', element: <AdminSongCreatePage /> },
+              { path: '/admin/songs/new', element: <AdminSongsNewPage /> },
               { path: '/admin/songs/:id/edit', element: <AdminSongEditPage /> },
-              { path: '/admin/performers/bulk', element: <AdminPerformersBulkPage /> },
-              { path: '/admin/albums/bulk', element: <AdminAlbumsBulkPage /> },
-              { path: '/admin/songs/bulk', element: <AdminSongsBulkPage /> },
             ],
           },
 

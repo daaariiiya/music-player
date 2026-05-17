@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useNavigate, useParams } from 'react-router-dom';
 import { mutate } from 'swr';
-import { performersApi, type CreatePerformerPayload } from '../../api/performers.api';
+import { performersApi } from '../../api/performers.api';
 import { usePerformerById } from '../../hooks/usePerformerById';
 import { PhotoUploader } from '../../components/admin/PhotoUploader';
 import { toast, toastError } from '../../utils/toast';
@@ -82,19 +82,11 @@ export const AdminPerformerForm = ({ mode }: Props) => {
           delete (cleaned as Record<string, unknown>).birthday_date;
           delete (cleaned as Record<string, unknown>).career_started_date;
         }
-        if (mode === 'create') {
-          const payload = cleaned as CreatePerformerPayload;
-          const res = await performersApi.create(payload);
-          toast.success('Performer created.');
-          mutate(['performers']);
-          navigate(`/performers/${res.data?.performerId}`);
-        } else {
-          await performersApi.update(performerId as number, cleaned);
-          toast.success('Performer updated.');
-          mutate(['performers']);
-          mutate(['performer', performerId]);
-          navigate(`/performers/${performerId}`);
-        }
+        await performersApi.update(performerId as number, cleaned);
+        toast.success('Performer updated.');
+        mutate(['performers']);
+        mutate(['performer', performerId]);
+        navigate(`/performers/${performerId}`);
       } catch (e) {
         toastError(e);
       }
@@ -139,5 +131,4 @@ export const AdminPerformerForm = ({ mode }: Props) => {
   );
 };
 
-export const AdminPerformerCreatePage = () => <AdminPerformerForm mode="create" />;
 export const AdminPerformerEditPage = () => <AdminPerformerForm mode="edit" />;

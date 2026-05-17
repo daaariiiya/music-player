@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { uploadApi } from '../../api/upload.api';
 import { toast, toastError } from '../../utils/toast';
 
@@ -12,6 +12,7 @@ export const PhotoUploader = ({ initialUrl, onUploaded, onCleared }: Props) => {
   const [preview, setPreview] = useState<string | null>(initialUrl ?? null);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -28,29 +29,38 @@ export const PhotoUploader = ({ initialUrl, onUploaded, onCleared }: Props) => {
       toastError(err);
     } finally {
       setUploading(false);
+      // Clear native file-input value so user can re-pick same file later
+      if (inputRef.current) inputRef.current.value = '';
     }
   };
 
   const handleReset = () => {
     setPreview(null);
     setUploaded(false);
+    if (inputRef.current) inputRef.current.value = '';
     onCleared?.();
   };
 
   return (
     <div className="photo-uploader">
-      {preview && (
+      {preview ? (
         <div className="photo-uploader-preview">
           <img src={preview} alt="preview" />
           {uploaded && <span className="photo-uploader-badge">✓ Uploaded</span>}
+          <button type="button" onClick={handleReset} className="btn-ghost photo-uploader-reset">
+            Reset
+          </button>
         </div>
+      ) : (
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleChange}
+          disabled={uploading}
+        />
       )}
-      <div className="photo-uploader-actions">
-        <input type="file" accept="image/*" onChange={handleChange} disabled={uploading} />
-        {uploaded && (
-          <button type="button" onClick={handleReset} className="btn-ghost">Reset</button>
-        )}
-      </div>
+      {uploading && <span className="photo-uploader-hint">Uploading…</span>}
     </div>
   );
 };

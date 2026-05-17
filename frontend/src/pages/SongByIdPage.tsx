@@ -1,8 +1,9 @@
-import { useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { mutate } from 'swr';
 import { useSongById } from '../hooks/useSongById';
 import { usePlaylists } from '../hooks/usePlaylists';
 import { playlistsApi } from '../api/playlists.api';
+import { songsApi } from '../api/songs.api';
 import { useAuthStore } from '../store/auth.store';
 import { toast, toastError } from '../utils/toast';
 import { formatDuration } from '../utils/format';
@@ -14,7 +15,21 @@ export const SongByIdPage = () => {
   const songId = Number(id);
   const { data, isLoading } = useSongById(songId);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAdmin = useAuthStore((s) => s.role === 'admin');
   const { data: playlists } = usePlaylists();
+  const navigate = useNavigate();
+
+  const handleDelete = async () => {
+    if (!confirm('Delete this song? It will be removed from all playlists.')) return;
+    try {
+      await songsApi.remove(songId);
+      toast.success('Song deleted.');
+      mutate(['songs']);
+      navigate('/songs');
+    } catch (e) {
+      toastError(e);
+    }
+  };
 
   const handleAdd = async (playlistId: number) => {
     try {
@@ -38,7 +53,15 @@ export const SongByIdPage = () => {
           <div className="detail-photo detail-photo--placeholder">♪</div>
         )}
         <div className="detail-info">
-          <h2 style={{ marginBottom: '0.25rem' }}>{data.title}</h2>
+          <div className="detail-title-row">
+            <h2 style={{ marginBottom: '0.25rem' }}>{data.title}</h2>
+            {isAdmin && (
+              <div className="detail-actions">
+                <Link to={`/admin/songs/${songId}/edit`} className="btn-edit">Edit</Link>
+                <button type="button" onClick={handleDelete} className="btn-delete">Delete</button>
+              </div>
+            )}
+          </div>
           <div className="detail-chips">
             <span className="card-chip">{data.performer_name}</span>
             {data.album_title && <span className="card-chip">{data.album_title}</span>}

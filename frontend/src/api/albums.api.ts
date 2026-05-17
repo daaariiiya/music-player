@@ -47,9 +47,6 @@ export const albumsApi = {
   getById: (id: number) =>
     apiClient.get<ApiResponse<AlbumDetail>>(`/albums/${id}`).then((r) => r.data),
 
-  create: (payload: CreateAlbumPayload) =>
-    apiClient.post<ApiResponse<{ albumId: number }>>('/albums', payload).then((r) => r.data),
-
   update: (id: number, payload: UpdateAlbumPayload) =>
     apiClient.put<ApiResponse>(`/albums/${id}`, payload).then((r) => r.data),
 

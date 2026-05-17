@@ -20,12 +20,6 @@ export const getOne = async (c: Context) => {
   return c.json(success('Performer detail.', data));
 };
 
-export const create = async (c: Context) => {
-  const body = c.get('body') as CreatePerformerInput;
-  const result = await service.create(body);
-  return c.json(success('Performer created.', result), 201);
-};
-
 export const bulkCreate = async (c: Context) => {
   const body = c.get('body') as BulkCreatePerformersInput;
   const results = await service.bulkCreate(body.items as CreatePerformerInput[]);

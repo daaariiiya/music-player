@@ -1,7 +1,11 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { mutate } from 'swr';
 import { usePerformerById } from '../hooks/usePerformerById';
 import { useAlbums } from '../hooks/useAlbums';
 import { useSongs } from '../hooks/useSongs';
+import { useAuthStore } from '../store/auth.store';
+import { performersApi } from '../api/performers.api';
+import { toast, toastError } from '../utils/toast';
 import { Spinner } from '../components/ui/Spinner';
 import { EmptyState } from '../components/ui/EmptyState';
 
@@ -11,6 +15,20 @@ export const PerformerByIdPage = () => {
   const { data, isLoading } = usePerformerById(performerId);
   const { data: albums } = useAlbums();
   const { data: songs } = useSongs();
+  const isAdmin = useAuthStore((s) => s.role === 'admin');
+  const navigate = useNavigate();
+
+  const handleDelete = async () => {
+    if (!confirm('Delete this performer? Albums and songs may break their link.')) return;
+    try {
+      await performersApi.remove(performerId);
+      toast.success('Performer deleted.');
+      mutate(['performers']);
+      navigate('/performers');
+    } catch (e) {
+      toastError(e);
+    }
+  };
 
   if (isLoading) return <Spinner />;
   if (!data) return <EmptyState message="Performer not found." />;
@@ -28,7 +46,15 @@ export const PerformerByIdPage = () => {
           <div className="detail-photo detail-photo--placeholder">♪</div>
         )}
         <div className="detail-info">
-          <h2 style={{ marginBottom: '0.25rem' }}>{name}</h2>
+          <div className="detail-title-row">
+            <h2 style={{ marginBottom: '0.25rem' }}>{name}</h2>
+            {isAdmin && (
+              <div className="detail-actions">
+                <Link to={`/admin/performers/${performerId}/edit`} className="btn-edit">Edit</Link>
+                <button type="button" onClick={handleDelete} className="btn-delete">Delete</button>
+              </div>
+            )}
+          </div>
           <div className="detail-chips">
             <span className="card-chip">{data.performer.type}</span>
             <span className="card-chip">{data.performer.genre}</span>

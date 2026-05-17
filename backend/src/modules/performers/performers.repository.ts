@@ -1,10 +1,13 @@
 // Pattern: Repository
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { db } from '../../config/database.js';
 import { performers, type Performer, type NewPerformer } from '../../schema/performers.js';
 import { artists, type Artist, type NewArtist } from '../../schema/artists.js';
 import { music_groups, type MusicGroup, type NewMusicGroup } from '../../schema/music_groups.js';
 import { artists_in_groups } from '../../schema/artists_in_groups.js';
+import { albums } from '../../schema/albums.js';
+import { songs } from '../../schema/songs.js';
+import { songs_in_playlists } from '../../schema/songs_in_playlists.js';
 import { photos } from '../../schema/photos.js';
 
 export interface PerformerListRow {
@@ -157,7 +160,21 @@ export const updateGroupByPerformer = (
  * @param performerId - performer_id
  */
 export const deletePerformer = async (performerId: number): Promise<void> => {
-  // remove memberships if artist
+  // 1. Collect all song_ids of this performer + remove them from any playlists
+  const performerSongs = await db
+    .select({ id: songs.song_id })
+    .from(songs)
+    .where(eq(songs.performer_id, performerId));
+  const songIds = performerSongs.map((r) => r.id);
+  if (songIds.length > 0) {
+    await db.delete(songs_in_playlists).where(inArray(songs_in_playlists.song_id, songIds));
+    await db.delete(songs).where(eq(songs.performer_id, performerId));
+  }
+
+  // 2. Delete albums of this performer (songs already gone so no FK left to clear)
+  await db.delete(albums).where(eq(albums.performer_id, performerId));
+
+  // 3. Memberships if artist
   const linkedArtist = await db
     .select({ id: artists.artist_id })
     .from(artists)
@@ -167,7 +184,7 @@ export const deletePerformer = async (performerId: number): Promise<void> => {
     await db.delete(artists_in_groups).where(eq(artists_in_groups.artist_id, linkedArtist.id));
   }
 
-  // remove memberships if group
+  // 4. Memberships if group
   const linkedGroup = await db
     .select({ id: music_groups.group_id })
     .from(music_groups)
@@ -177,8 +194,11 @@ export const deletePerformer = async (performerId: number): Promise<void> => {
     await db.delete(artists_in_groups).where(eq(artists_in_groups.group_id, linkedGroup.id));
   }
 
+  // 5. Discriminator rows
   await db.delete(artists).where(eq(artists.performer_id, performerId));
   await db.delete(music_groups).where(eq(music_groups.performer_id, performerId));
+
+  // 6. Finally the performer itself
   await db.delete(performers).where(eq(performers.performer_id, performerId));
 };
 

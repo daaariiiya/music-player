@@ -32,11 +32,6 @@ export const performersApi = {
   getById: (id: number) =>
     apiClient.get<ApiResponse<PerformerDetail>>(`/performers/${id}`).then((r) => r.data),
 
-  create: (payload: CreatePerformerPayload) =>
-    apiClient
-      .post<ApiResponse<{ performerId: number }>>('/performers', payload)
-      .then((r) => r.data),
-
   update: (id: number, payload: UpdatePerformerPayload) =>
     apiClient.put<ApiResponse>(`/performers/${id}`, payload).then((r) => r.data),
 

@@ -22,6 +22,20 @@ export const errorHandler = (err: Error, c: Context): Response => {
     return c.json(apiError(err.message || 'Request failed.'), err.status);
   }
 
+  // Postgres FK / unique violation — raw `err.code` exposed by postgres-js
+  const pgErr = err as Error & { code?: string; constraint_name?: string };
+  if (typeof pgErr.code === 'string') {
+    if (pgErr.code === '23503') {
+      return c.json(apiError('Cannot delete: this record is still referenced by other items.'), 409);
+    }
+    if (pgErr.code === '23505') {
+      return c.json(apiError('A record with these values already exists.'), 409);
+    }
+    if (pgErr.code === '23502') {
+      return c.json(apiError('Required field is missing.'), 400);
+    }
+  }
+
   console.error('[unhandled]', err);
   const message = env.NODE_ENV === 'production' ? 'Internal server error.' : err.message;
   return c.json(apiError(message), 500);

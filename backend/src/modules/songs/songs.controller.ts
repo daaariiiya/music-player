@@ -16,11 +16,6 @@ export const list = async (c: Context) =>
 export const getOne = async (c: Context) =>
   c.json(success('Song detail.', await service.getById(parseId(c))));
 
-export const create = async (c: Context) => {
-  const body = c.get('body') as CreateSongInput;
-  return c.json(success('Song created.', await service.create(body)), 201);
-};
-
 export const bulkCreate = async (c: Context) => {
   const body = c.get('body') as BulkCreateSongsInput;
   const results = await service.bulkCreate(body.items as CreateSongInput[]);

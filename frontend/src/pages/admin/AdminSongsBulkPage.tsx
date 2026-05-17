@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm, useFieldArray, useWatch, type Control } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { mutate } from 'swr';
@@ -59,57 +59,77 @@ const EMPTY: Item = {
 
 interface CardProps {
   index: number;
+  control: Control<FormValues>;
   register: ReturnType<typeof useForm<FormValues>>['register'];
   setValue: ReturnType<typeof useForm<FormValues>>['setValue'];
   remove: () => void;
   performers: Array<{ performer_id: number; name: string }>;
-  albums: Array<{ album_id: number; title: string }>;
+  albums: Array<{ album_id: number; title: string; performer_id: number }>;
   result?: BulkSongResultRow;
   errors?: Record<string, { message?: string }>;
 }
 
-const SongCard = ({ index, register, setValue, remove, performers, albums, result, errors }: CardProps) => (
-  <div className={`bulk-edit-card ${result?.ok ? 'card--ok' : result && !result.ok ? 'card--error' : ''}`}>
-    <div className="bulk-edit-header">
-      <span className="bulk-edit-index">#{index + 1}</span>
-      <button type="button" onClick={remove} className="btn-ghost">Remove</button>
-    </div>
-    <PhotoUploader
-      onUploaded={(id) => setValue(`items.${index}.photoId`, id)}
-      onCleared={() => setValue(`items.${index}.photoId`, undefined)}
-    />
-    <div className="bulk-edit-grid">
-      <input placeholder="Title" {...register(`items.${index}.title`)} />
-      <input type="number" placeholder="Duration (seconds)" {...register(`items.${index}.duration_seconds`)} />
-      <label>Release date<input type="date" {...register(`items.${index}.release_date`)} /></label>
-      <select {...register(`items.${index}.performer_id`)}>
-        <option value="">Select performer</option>
-        {performers.map((p) => (
-          <option key={p.performer_id} value={p.performer_id}>{p.name}</option>
-        ))}
-      </select>
-      <select {...register(`items.${index}.album_id`)}>
-        <option value="">No album</option>
-        {albums.map((a) => (
-          <option key={a.album_id} value={a.album_id}>{a.title}</option>
-        ))}
-      </select>
-      <textarea placeholder="Description (optional)" {...register(`items.${index}.description`)} />
-    </div>
-    {errors && Object.keys(errors).length > 0 && (
-      <div className="bulk-errors">
-        {Object.entries(errors).map(([field, e]) => (
-          <div key={field}>• {e.message}</div>
-        ))}
+const SongCard = ({ index, control, register, setValue, remove, performers, albums, result, errors }: CardProps) => {
+  const rowPerformer = useWatch({ control, name: `items.${index}.performer_id` });
+  const rowAlbum = useWatch({ control, name: `items.${index}.album_id` });
+  const performerId = Number(rowPerformer) || 0;
+  const filteredAlbums = useMemo(
+    () => (performerId > 0 ? albums.filter((a) => Number(a.performer_id) === performerId) : []),
+    [albums, performerId]
+  );
+
+  // If selected album doesn't belong to selected performer anymore → clear it
+  useEffect(() => {
+    if (!rowAlbum) return;
+    const id = typeof rowAlbum === 'string' ? Number(rowAlbum) : rowAlbum;
+    if (performerId && !albums.some((a) => a.album_id === id && a.performer_id === performerId)) {
+      setValue(`items.${index}.album_id`, undefined);
+    }
+  }, [performerId, rowAlbum, albums, index, setValue]);
+
+  return (
+    <div className={`bulk-edit-card ${result?.ok ? 'card--ok' : result && !result.ok ? 'card--error' : ''}`}>
+      <div className="bulk-edit-header">
+        <span className="bulk-edit-index">#{index + 1}</span>
+        <button type="button" onClick={remove} className="btn-ghost">Remove</button>
       </div>
-    )}
-    {result && (
-      <div className={result.ok ? 'bulk-status-ok' : 'bulk-status-fail'}>
-        {result.ok ? `✓ Created #${result.songId}` : `✗ ${result.error}`}
+      <PhotoUploader
+        onUploaded={(id) => setValue(`items.${index}.photoId`, id)}
+        onCleared={() => setValue(`items.${index}.photoId`, undefined)}
+      />
+      <div className="bulk-edit-grid">
+        <input placeholder="Title" {...register(`items.${index}.title`)} />
+        <input type="number" placeholder="Duration (seconds)" {...register(`items.${index}.duration_seconds`)} />
+        <label>Release date<input type="date" {...register(`items.${index}.release_date`)} /></label>
+        <select {...register(`items.${index}.performer_id`)}>
+          <option value="">Select performer</option>
+          {performers.map((p) => (
+            <option key={p.performer_id} value={p.performer_id}>{p.name}</option>
+          ))}
+        </select>
+        <select {...register(`items.${index}.album_id`)} disabled={performerId === 0}>
+          <option value="">{performerId > 0 ? 'No album' : 'Pick performer first'}</option>
+          {filteredAlbums.map((a) => (
+            <option key={a.album_id} value={a.album_id}>{a.title}</option>
+          ))}
+        </select>
+        <textarea placeholder="Description (optional)" {...register(`items.${index}.description`)} />
       </div>
-    )}
-  </div>
-);
+      {errors && Object.keys(errors).length > 0 && (
+        <div className="bulk-errors">
+          {Object.entries(errors).map(([field, e]) => (
+            <div key={field}>• {e.message}</div>
+          ))}
+        </div>
+      )}
+      {result && (
+        <div className={result.ok ? 'bulk-status-ok' : 'bulk-status-fail'}>
+          {result.ok ? `✓ Created #${result.songId}` : `✗ ${result.error}`}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const AdminSongsBulkPage = () => {
   const { data: performers } = usePerformers();
@@ -124,6 +144,19 @@ export const AdminSongsBulkPage = () => {
   });
   const { fields, append, remove, replace } = useFieldArray({ control: form.control, name: 'items' });
 
+  const filteredGlobalAlbums = useMemo(
+    () => (globalPerformer === '' ? [] : (albums ?? []).filter((a) => Number(a.performer_id) === Number(globalPerformer))),
+    [albums, globalPerformer]
+  );
+
+  // Clear global album when performer changes if it no longer matches
+  useEffect(() => {
+    if (globalAlbum === '') return;
+    if (globalPerformer === '') return;
+    const ok = (albums ?? []).some((a) => a.album_id === globalAlbum && a.performer_id === globalPerformer);
+    if (!ok) setGlobalAlbum('');
+  }, [globalPerformer, globalAlbum, albums]);
+
   const applyPerformerToAll = () => {
     if (globalPerformer === '') {
       toast.error('Pick a performer first.');
@@ -134,12 +167,13 @@ export const AdminSongsBulkPage = () => {
   };
 
   const applyAlbumToAll = () => {
-    if (globalAlbum === '') {
-      toast.error('Pick an album first.');
-      return;
-    }
-    fields.forEach((_, idx) => form.setValue(`items.${idx}.album_id`, globalAlbum));
-    toast.success(`Album applied to ${fields.length} song(s).`);
+    const value = globalAlbum === '' ? undefined : globalAlbum;
+    fields.forEach((_, idx) => form.setValue(`items.${idx}.album_id`, value));
+    toast.success(
+      value === undefined
+        ? `Cleared album on ${fields.length} song(s).`
+        : `Album applied to ${fields.length} song(s).`
+    );
   };
 
   const handleJsonFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -186,7 +220,7 @@ export const AdminSongsBulkPage = () => {
           Performer
           <div className="bulk-defaults-row">
             <select value={globalPerformer} onChange={(e) => setGlobalPerformer(e.target.value ? Number(e.target.value) : '')}>
-              <option value="">— pick —</option>
+              <option value="" disabled>— pick —</option>
               {(performers ?? []).map((p) => (
                 <option key={p.performer_id} value={p.performer_id}>{p.name}</option>
               ))}
@@ -197,9 +231,13 @@ export const AdminSongsBulkPage = () => {
         <label>
           Album
           <div className="bulk-defaults-row">
-            <select value={globalAlbum} onChange={(e) => setGlobalAlbum(e.target.value ? Number(e.target.value) : '')}>
-              <option value="">— none —</option>
-              {(albums ?? []).map((a) => (
+            <select
+              value={globalAlbum}
+              onChange={(e) => setGlobalAlbum(e.target.value ? Number(e.target.value) : '')}
+              disabled={globalPerformer === ''}
+            >
+              <option value="">{globalPerformer === '' ? 'Pick performer first' : 'No album'}</option>
+              {filteredGlobalAlbums.map((a) => (
                 <option key={a.album_id} value={a.album_id}>{a.title}</option>
               ))}
             </select>
@@ -236,6 +274,7 @@ export const AdminSongsBulkPage = () => {
             <SongCard
               key={f.id}
               index={idx}
+              control={form.control}
               register={form.register}
               setValue={form.setValue}
               remove={() => remove(idx)}
